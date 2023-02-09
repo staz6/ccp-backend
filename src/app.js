@@ -13,6 +13,11 @@ const cors = require("cors");
 const passport = require("passport");
 // for http status code handling
 const httpStatus = require("http-status");
+// Jwt token init
+const { jwtStrategy } = require('./config/passport');
+const routes = require('./routes');
+
+
 
 const app = express();
 
@@ -35,6 +40,13 @@ app.use(compression());
 // enable cors
 app.use(cors());
 app.options("*", cors());
+
+// jwt authentication
+app.use(passport.initialize());
+passport.use('jwt', jwtStrategy);
+
+// app.use('/v1/auth', authLimiter);
+app.use('/v1', routes);
 
 app.get("/ping", (req, res) => {
   res.end("pong");
