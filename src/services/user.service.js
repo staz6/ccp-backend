@@ -21,7 +21,6 @@ const createUser = async (userBody) => {
  */
 const authenticateUser = async (authBody) => {
   const user = await User.findOne({email: authBody.email})
-  console.log(user)
   if (!user) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid email or password');
   }
@@ -31,8 +30,22 @@ const authenticateUser = async (authBody) => {
   return user
 };
 
+/**
+ * Get user by id
+ * @param {string} id
+ * @returns {Promise<User>}
+ */
+const getUserById = async (id) => {
+  const user = await User.findOne({id: id})
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, `User doesn't exist`);
+  }
+  return user
+};
+
 module.exports = {
     createUser,
-    authenticateUser
+    authenticateUser,
+    getUserById
 };
   
