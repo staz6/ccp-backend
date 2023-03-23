@@ -44,6 +44,17 @@ const getUserById = async (id) => {
   return user
 };
 
+const adds3Bucket = async(userId,bucketName) => {
+  try{
+    const user = await getUserById(userId)
+    user.s3Buckets.push(bucketName);
+    await user.save();
+    return user;
+  }catch(err){
+    throw new ApiError(httpStatus.BAD_REQUEST,err)
+  }
+}
+
 const addEc2Instance = async (userId,instanceId,tier,instanceName,launchTime,zone) => {
   try{
     const user = await getUserById(userId)
@@ -78,6 +89,7 @@ module.exports = {
     authenticateUser,
     getUserById,
     addEc2Instance,
-    deleteUserEc2Instance
+    deleteUserEc2Instance,
+    adds3Bucket
 };
   

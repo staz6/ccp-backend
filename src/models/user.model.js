@@ -29,6 +29,9 @@ const userSchema = mongoose.Schema(
       unique: true,
       trim: true
     },
+    s3Buckets:{
+      type: Array,
+    },
     ec2Instances:{
       type: Array
     },

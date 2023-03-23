@@ -1,18 +1,17 @@
 const httpStatus = require('http-status');
 const catchAsync = require('../utils/catchAsync');
-const { s3Service } = require('../services');
+const { s3Service, userService } = require('../services');
 
 const deploy = catchAsync(async (req, res) => {
     const {bucketName} = req.body
     const data = await s3Service.createPublicBucket(`${req.user.organization}-${req.user.username}-${bucketName}`)
-    console.log(data)
+    await userService.adds3Bucket(req.user.id,`${req.user.organization}-${req.user.username}-${bucketName}`)
     res.status(httpStatus.CREATED).send( data );
 });
 
 const getFiles = catchAsync(async (req, res) => {
     const {bucketName} = req.params
     const data = await s3Service.listBucketObjects(bucketName)
-    console.log(data)
     res.status(httpStatus.OK).send( data );
 });
 
