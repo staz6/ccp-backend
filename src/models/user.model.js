@@ -23,6 +23,15 @@ const userSchema = mongoose.Schema(
         }
       },
     },
+    username:{
+      type: String,
+      required: true,
+      unique: true,
+      trim: true
+    },
+    ec2Instances:{
+      type: Array
+    },
     organization: {
       type: String,
       required: true,

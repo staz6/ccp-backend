@@ -11,6 +11,9 @@ const envVarsSchema = Joi.object()
     PASSWORD_SALT: Joi.string().required().description("Password salt is required"),
     MONGODB_URL: Joi.string().required().description('Mongo DB url'),
     DATABASE_NAME: Joi.string().required().description('Database name is required'),
+    AWS_ACCESS_KEY: Joi.string().required().description('AWS access key is required'),
+    AWS_SECRET_KEY: Joi.string().required().description('AWS secret key is required'),
+    AWS_REGION: Joi.string().required().description("AWS region is required"),
     JWT_SECRET: Joi.string().required().description('JWT secret key'),
     JWT_ACCESS_EXPIRATION_MINUTES: Joi.number().default(30).description('minutes after which access tokens expire'),
     JWT_REFRESH_EXPIRATION_DAYS: Joi.number().default(30).description('days after which refresh tokens expire'),
@@ -37,6 +40,11 @@ module.exports = {
   env: envVars.NODE_ENV,
   port: envVars.PORT,
   passwordSalt:envVars.PASSWORD_SALT,
+  aws:{
+    accessKey:envVars.AWS_ACCESS_KEY,
+    secretKey:envVars.AWS_SECRET_KEY,
+    region:envVars.AWS_REGION
+  },
   mongoose: {
     url: envVars.MONGODB_URL + (envVars.NODE_ENV === 'test' ? '-test' : ''),
     options: {

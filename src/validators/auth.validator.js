@@ -10,7 +10,7 @@ const register = {
     name: Joi.string().required(),
     password: Joi.string().required(),
     organization: Joi.string().required(),
-    
+    username: Joi.string().required(),
   }),
 };
 

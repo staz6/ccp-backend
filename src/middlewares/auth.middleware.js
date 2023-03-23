@@ -13,8 +13,8 @@ const authenticateUser = async (req, res, next) => {
         next(new ApiError(httpStatus.UNAUTHORIZED, "Please authenticate"));
       }
       const decode = jwt_decode(token);
-      const user = userService.getUserById(decode.sub);
-      if (user.role === "user") {
+      const user = await userService.getUserById(decode.sub);
+      if (user?.role === "user") {
         req.user = user;
         next();
       } else {
