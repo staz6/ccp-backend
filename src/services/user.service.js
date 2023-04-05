@@ -1,5 +1,4 @@
 const httpStatus = require('http-status');
-const { Http } = require('winston/lib/winston/transports');
 const { User } = require('../models');
 const ApiError = require('../utils/ApiError');
 
@@ -84,12 +83,38 @@ const deleteUserEc2Instance = async (userId, instanceId) => {
   }
 };
 
+const addStorageACcount = async(userId,accountId,creationTime,name) => {
+  try{
+    const user = await getUserById(userId)
+    user.storageAccounts.push({id:accountId,status:true,launchTime:creationTime,name});
+    await user.save();
+    return user;
+  }catch(err){
+    throw new ApiError(httpStatus.BAD_REQUEST,err)
+  }
+}
+
+const removeStorageAccount = async(userId,name)=>{
+  try{
+    const user = await getUserById(userId)
+    const index = user.storageAccounts.findIndex((obj) => obj.name === name);
+    if(index >= 0){
+      user.ec2Instances[index].status=false
+      await user.save();
+    }
+  }catch(err){
+    throw new ApiError(httpStatus.BAD_REQUEST,err)
+  }
+}
+
 module.exports = {
     createUser,
     authenticateUser,
     getUserById,
     addEc2Instance,
     deleteUserEc2Instance,
-    adds3Bucket
+    adds3Bucket,
+    addStorageACcount,
+    removeStorageAccount
 };
   

@@ -35,6 +35,12 @@ const describeInstances = catchAsync(async (req, res) => {
     res.status(httpStatus.OK).send({ data });
 });
 
+const getCost = catchAsync(async (req, res) => {
+    const {instanceIds} = req.body
+    const data = await ec2Service.getCost(instanceIds)
+    res.status(httpStatus.OK).send({ data });
+});
+
 
 
 module.exports={
@@ -42,5 +48,6 @@ module.exports={
     stop,
     restart,
     terminate,
-    describeInstances
+    describeInstances,
+    getCost
 }

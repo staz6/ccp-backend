@@ -35,6 +35,9 @@ const userSchema = mongoose.Schema(
     ec2Instances:{
       type: Array
     },
+    storageAccounts:{
+      type:Array
+    },
     organization: {
       type: String,
       required: true,
