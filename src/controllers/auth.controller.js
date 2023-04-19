@@ -14,7 +14,13 @@ const login = catchAsync(async (req, res) => {
   res.status(httpStatus.CREATED).send({ user, tokens });
 });
 
+const getUser = catchAsync(async (req, res) => {
+  const user = await userService.getUserById(req.user.id);
+  res.status(httpStatus.CREATED).send(user);
+}); 
+
 module.exports={
     register,
-    login
+    login,
+    getUser
 }

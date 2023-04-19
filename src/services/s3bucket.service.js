@@ -12,6 +12,7 @@ async function createPublicBucket(bucketName) {
     try {
       const data = await s3.createBucket(params).promise();
       console.log(`Bucket ${bucketName} created successfully.`);
+      console.log(data)
       return data;
     } catch (err) {
         throw new ApiError(httpStatus.BAD_REQUEST, err);
@@ -25,10 +26,25 @@ async function listBucketObjects(bucketName) {
     
     try {
       const data = await s3.listObjectsV2(params).promise();
-    //   const objects = data.Contents.map((object) => object.Key);
-      return data;
+      const result = data.Contents.map((item) => {
+        const url = s3.getSignedUrl('getObject', {
+          Bucket: bucketName,
+          Key: item.Key,
+          Expires: 60 * 60 // Access link expiry time in seconds (1 hour in this example)
+        });
+        return {
+          Key: item.Key,
+          LastModified: item.LastModified,
+          ETag: item.ETag,
+          ChecksumAlgorithm: [],
+          Size: item.Size,
+          StorageClass: item.StorageClass,
+          Url: url
+        };
+      });
+      return result;
     } catch (err) {
-        throw new ApiError(httpStatus.BAD_REQUEST, err);
+      throw new ApiError(httpStatus.BAD_REQUEST, err);
     }
 }
 

@@ -46,7 +46,11 @@ const getUserById = async (id) => {
 const adds3Bucket = async(userId,bucketName) => {
   try{
     const user = await getUserById(userId)
-    user.s3Buckets.push(bucketName);
+    user.s3Buckets.push({
+      status:true,
+      launchTime:new Date(),
+      name:bucketName
+    });
     await user.save();
     return user;
   }catch(err){
