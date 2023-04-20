@@ -4,31 +4,75 @@ const ApiError = require('../utils/ApiError');
 const { generatePassword } = require("../utils/helper");
 const ec2 = new AWS.EC2();
 
-const deploy = async (imageId, instanceType, keyName,name) => {
-    try {
-      const instanceParams = {
-        ImageId: imageId,
-        InstanceType: instanceType,
-        KeyName: keyName,
-        MinCount: 1,
-        MaxCount: 1
-      };
-      const { Instances } = await ec2.runInstances(instanceParams).promise();
-      const [{ InstanceId }] = Instances;
-      await ec2.createTags({
+async function findOrCreateSecurityGroup(groupName) {
+  const { SecurityGroups } = await ec2.describeSecurityGroups().promise();
+  const existingGroup = SecurityGroups.find((group) => group.GroupName === groupName);
+
+  if (existingGroup) {
+    return existingGroup;
+  }
+
+  // Create a new security group
+  const groupDescription = 'My security group for EC2 instances';
+  const { GroupId } = await ec2.createSecurityGroup({ GroupName: groupName, Description: groupDescription }).promise();
+
+  // Add an inbound rule to allow SSH traffic (port 22) from any IP address (0.0.0.0/0)
+  const params = {
+    GroupId,
+    IpPermissions: [
+      {
+        IpProtocol: 'tcp',
+        FromPort: 22,
+        ToPort: 22,
+        IpRanges: [{ CidrIp: '0.0.0.0/0' }],
+      },
+    ],
+  };
+  await ec2.authorizeSecurityGroupIngress(params).promise();
+
+  return { GroupId };
+}
+
+
+const deploy = async (imageId, instanceType, name) => {
+  try {
+    // Create a new security group
+    const groupName = 'my-security-group';
+
+    // Check if the security group exists
+    const { GroupId } = await findOrCreateSecurityGroup(groupName);
+    const keyName = `key-${Date.now()}`;
+    const { KeyMaterial } = await ec2.createKeyPair({ KeyName: keyName }).promise();
+
+    // Create the EC2 instance
+    const instanceParams = {
+      ImageId: imageId,
+      InstanceType: instanceType,
+      KeyName: keyName,
+      MinCount: 1,
+      MaxCount: 1,
+      SecurityGroupIds: [GroupId],
+    };
+    const { Instances } = await ec2.runInstances(instanceParams).promise();
+    const [{ InstanceId }] = Instances;
+    await ec2
+      .createTags({
         Resources: [InstanceId],
         Tags: [
           {
             Key: 'Name',
-            Value: name
-          }
-        ]
-      }).promise();
-      console.log('Instance created:', InstanceId);
-      return Instances;
-    } catch (error) {
-      throw new ApiError(httpStatus.BAD_REQUEST, error);
-    }
+            Value: name,
+          },
+        ],
+      })
+      .promise();
+    console.log('Instance created:', InstanceId);
+    console.log(KeyMaterial)
+    
+    return {Instances,KeyMaterial};
+  } catch (error) {
+    throw new ApiError(httpStatus.BAD_REQUEST, error);
+  }
 };
 
 const stop = async (instanceId) => {
@@ -63,9 +107,9 @@ const terminate = async (instanceId) => {
 
 const describeInstances = async(instaceId) => {
   try{
-    const { PublicIpAddress } = await ec2.describeInstances({
+    const data = await ec2.describeInstances({
       InstanceIds: [instaceId]
-    }).promise().then(data => data.Reservations[0].Instances[0].NetworkInterfaces[0]);
+    }).promise()
 
     // Create login credentials for the EC2 instance
     const username = 'ec2-user'; // The default username for Linux instances
@@ -73,7 +117,7 @@ const describeInstances = async(instaceId) => {
 
     return {
       instaceId,
-      PublicIpAddress,
+      data,
       Username: username,
       Password: password
     };

@@ -3,29 +3,31 @@ const catchAsync = require('../utils/catchAsync');
 const { ec2Service, userService } = require('../services');
 
 const deploy = catchAsync(async (req, res) => {
-    const {imageId,instanceType,keyName,name} = req.body
-    const data = await ec2Service.deploy(imageId,instanceType,keyName,`${req.user.organization}-${req.user.username}-${name}`)
-    console.log(data)
-    await userService.addEc2Instance(req.user.id,data[0].InstanceId,data[0].InstanceType,`${req.user.organization}-${req.user.username}-${name}`,data[0].LaunchTime, data[0].Placement.AvailabilityZone)
-    res.status(httpStatus.CREATED).send( data );
+    const {imageId,instanceType,name} = req.body
+    const result = await ec2Service.deploy(imageId,instanceType,`${req.user.organization}-${req.user.username}-${name}`)
+    const data = result.Instances
+    await userService.addEc2Instance(req.user.id,data[0].InstanceId,data[0].InstanceType,`${req.user.organization}-${req.user.username}-${name}`,data[0].LaunchTime, data[0].Placement.AvailabilityZone,result.KeyMaterial)
+    res.status(httpStatus.CREATED).send( result );
 });
 
 const stop = catchAsync(async (req, res) => {
     const {instanceId} = req.body
     const data = await ec2Service.stop(instanceId)
+    await userService.deleteUserEc2Instance(req.user.id,instanceId,'stopped')
     res.status(httpStatus.OK).send({ data });
 });
 
 const restart = catchAsync(async (req, res) => {
     const {instanceId} = req.body
     const data = await ec2Service.restart(instanceId)
+    await userService.deleteUserEc2Instance(req.user.id,instanceId,'running')
     res.status(httpStatus.OK).send({ data });
 });
 
 const terminate = catchAsync(async (req, res) => {
     const {instanceId} = req.body
     const data = await ec2Service.terminate(instanceId)
-    await userService.deleteUserEc2Instance(req.user.id,instanceId)
+    await userService.deleteUserEc2Instance(req.user.id,instanceId,'terminated')
     res.status(httpStatus.OK).send({ data });
 });
 

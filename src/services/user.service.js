@@ -58,10 +58,10 @@ const adds3Bucket = async(userId,bucketName) => {
   }
 }
 
-const addEc2Instance = async (userId,instanceId,tier,instanceName,launchTime,zone) => {
+const addEc2Instance = async (userId,instanceId,tier,instanceName,launchTime,zone,keyMaterial) => {
   try{
     const user = await getUserById(userId)
-    user.ec2Instances.push({instanceId,tier,instanceName,launchTime,status:true,zone});
+    user.ec2Instances.push({instanceId,tier,instanceName,launchTime,status:'running',zone,keyMaterial});
     await user.save();
     return user;
   }catch(err){
@@ -69,13 +69,15 @@ const addEc2Instance = async (userId,instanceId,tier,instanceName,launchTime,zon
   }
 };
 
-const deleteUserEc2Instance = async (userId, instanceId) => {
+
+const deleteUserEc2Instance = async (userId, instanceId,status) => {
   try {
     const user = await getUserById(userId)
 
     const index = user.ec2Instances.findIndex((obj) => obj.instanceId === instanceId);
     if (index >= 0) {
-      user.ec2Instances[index].status=false
+      user.ec2Instances[index].status = status;
+      user.markModified('ec2Instances');
       await user.save();
       console.log(`Instance ${instanceId} removed from User ${userId} ec2Instances`);
     } else {
