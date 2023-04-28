@@ -31,12 +31,15 @@ const userSchema = mongoose.Schema(
     },
     s3Buckets:{
       type: Array,
+      default:[],
     },
     ec2Instances:{
-      type: Array
+      type: Array,
+      default:[],
     },
     storageAccounts:{
-      type:Array
+      type:Array,
+      default:[],
     },
     organization: {
       type: String,

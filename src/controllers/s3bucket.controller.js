@@ -20,7 +20,7 @@ const upload = catchAsync(async (req, res) => {
         Bucket: req.body.name,
         Key: req.file.originalname,
         Body: req.file.buffer,
-        ACL: 'public-read'
+        // ACL: 'public-read'
       };
     console.log(params)
     const data = await s3Service.uploadFile(params)

@@ -4,21 +4,56 @@ const ApiError = require('../utils/ApiError');
 
 const s3 = new AWS.S3();
 async function createPublicBucket(bucketName) {
-    const params = {
-      Bucket: bucketName.toLowerCase(),
-      ACL: 'public-read'
-    };
-    
-    try {
-      const data = await s3.createBucket(params).promise();
-      console.log(`Bucket ${bucketName} created successfully.`);
-      console.log(data)
-      return data;
-    } catch (err) {
-        throw new ApiError(httpStatus.BAD_REQUEST, err);
-    }
-}
+  const bucketNameLower = bucketName.toLowerCase();
+  const params = {
+    Bucket: bucketNameLower
+  };
 
+  try {
+    const data = await s3.createBucket(params).promise();
+    console.log(`Bucket ${bucketName} created successfully.`);
+    console.log(data);
+
+    // Disable public access block for the new bucket
+    const putPublicAccessBlockParams = {
+      Bucket: bucketNameLower,
+      PublicAccessBlockConfiguration: {
+        BlockPublicAcls: false,
+        IgnorePublicAcls: false,
+        BlockPublicPolicy: false,
+        RestrictPublicBuckets: false
+      }
+    };
+
+    await s3.putPublicAccessBlock(putPublicAccessBlockParams).promise();
+    console.log(`Public access block settings disabled for ${bucketName}.`);
+
+    // Put bucket policy to make the bucket publicly accessible
+    const publicReadPolicy = {
+      Version: "2012-10-17",
+      Statement: [
+        {
+          Effect: "Allow",
+          Principal: "*",
+          Action: ["s3:GetObject"],
+          Resource: [`arn:aws:s3:::${bucketNameLower}/*`]
+        }
+      ]
+    };
+
+    const putPolicyParams = {
+      Bucket: bucketNameLower,
+      Policy: JSON.stringify(publicReadPolicy)
+    };
+
+    await s3.putBucketPolicy(putPolicyParams).promise();
+    console.log(`Bucket policy applied to ${bucketName} for public read access.`);
+
+    return data;
+  } catch (err) {
+    throw new ApiError(httpStatus.BAD_REQUEST, err);
+  }
+}
 async function listBucketObjects(bucketName) {
     const params = {
       Bucket: bucketName
